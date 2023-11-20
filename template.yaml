@@ -6,6 +6,10 @@ Parameters:
     Type: String
     Description: URL da fila SQS existente
 
+  Stage:
+    Type: String
+    Description: Estágio do ambiente (dev, hml, prod)
+
 Resources:
   MyFunction:
     Type: AWS::Serverless::Function
@@ -18,3 +22,26 @@ Resources:
           Type: SQS
           Properties:
             Queue: !Ref ExistingQueueUrl
+
+      Environment:
+        Variables:
+          DATABASE_HOST:
+            Fn::If:
+              - IsDev
+              - "localhost"
+              - Fn::If:
+                  - IsHml
+                  - "hml-db-host"
+                  - Fn::If:
+                      - IsProd
+                      - "prod-db-host"
+                      - "undefined"
+
+          DATABASE_USER: "user"
+          DATABASE_PASSWORD: "password"
+          DATABASE_NAME: "mydatabase"
+
+Conditions:
+  IsDev: !Equals [!Ref Stage, "dev"]
+  IsHml: !Equals [!Ref Stage, "hml"]
+  IsProd: !Equals [!Ref Stage, "prod"]
